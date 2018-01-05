@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title></title>
+  <style>
+    body { padding: 0; margin: 0; background-color: rgb(22, 22, 22); }
+    #game { float: left; height: 100vh; width: 80%; border: 10px solid rgb(68, 214, 44); border-radius: 12px; box-sizing:border-box; }
+    canvas { background: white; display: block; margin: 0; }
+    #menu { float: right; height: 100vh; width: 20%; text-align:center; }
+    #menu table { background-color: rgb(34, 34, 34); border-collapse: collapse; margin: 0 auto; }
+    #menu th { color: white; padding: 5px 10px; }
+    #menu td { color: rgb(68, 214, 44); text-align: center; padding: 5px; }
+    #menu table, td, th { border: 1px solid rgb(68, 68, 68); }
+    #menu button { background-color: rgb(22, 22, 22); color: white; border: rgb(68, 214, 44) 2px solid; padding: 10px 15px; border-radius: 12px; }
+    #menu button:hover { color: rgb(68, 214, 44); }
+    #menu button:focus { outline: none; }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <canvas id="myCanvas"></canvas>
+  </div>
+  <div id="menu">
+    <br/>
+    <table>
+      <tr>
+        <th>Points</th>
+      </tr>
+      <tr>
+        <td>0</td>
+      </tr>
+      <tr>
+        <th>Missclicks</th>
+      </tr>
+      <tr>
+        <td>0</td>
+      </tr>
+      <tr>
+        <th>Avarage reaction time</th>
+      </tr>
+      <tr>
+        <td>0</td>
+      </tr>
+    </table>
+    <br/>
+    <button type="button" onclick="resetStats()">Reset</button>
+  </div>
+  <script>
+    var canvas = document.getElementById('myCanvas');
+    var context = canvas.getContext('2d');
+
+    var square = {
+      width: 100,
+      height: 100,
+      top: 0,
+      left: 0
+    };
+
+    var mousePosition = {
+      x:0,
+      y:0
+    };
+
+    var buttons = [49, 50, 51, 52, 53, 54, 55];
+    var randomButton = Math.floor((Math.random() * 9) + 0);
+
+    var points = document.getElementsByTagName("td")[0];
+    var missclicks = document.getElementsByTagName("td")[1];
+    var avgTime = document.getElementsByTagName("td")[2];
+
+    var seconds = [0];
+    var timer = setInterval(count, 10);
+    function count(){
+      seconds[seconds.length - 1] += 0.01;
+    }
+
+    resizeCanvasAndDrawSquare()
+
+    function resizeCanvasAndDrawSquare() {
+      canvas.width = canvas.parentElement.offsetWidth - 20;
+      canvas.height = canvas.parentElement.offsetHeight - 20;
+      drawSquare();
+    }
+
+    function drawSquare() {
+      square.top = Math.floor((Math.random() * (canvas.height - square.height + 1)) + 0);
+      square.left = Math.floor((Math.random() * (canvas.width - square.width + 1)) + 0);
+      context.beginPath();
+      context.rect(square.left, square.top, square.width, square.height);
+      context.fillStyle = 'rgb(22, 22, 22)';
+      context.fill();
+      context.lineWidth = 3;
+      context.strokeStyle = "rgb(68, 214, 44)";
+      context.stroke();
+      context.font="20px Georgia";
+      context.fillStyle = "white";
+      context.textAlign = "center";
+      if(randomButton == 7){
+        context.fillText("LPM", (square.left + square.width / 2), (square.top + square.height / 2));
+      } else if (randomButton == 8) {
+        context.fillText("PPM", (square.left + square.width / 2), (square.top + square.height / 2));
+      } else {
+        context.fillText(randomButton + 1, (square.left + square.width / 2), (square.top + square.height / 2));
+      }
+    }
+
+    window.addEventListener("resize", function (){
+      resizeCanvasAndDrawSquare()
+    });
+
+    document.addEventListener('mousemove', function(event) {
+      mousePosition.x = event.pageX;
+      mousePosition.y = event.pageY;
+    });
+
+    canvas.addEventListener('click', function() {
+      if(randomButton == 7  && ifSquareClicked()){
+        clicked()
+      } else {
+        missclicked();
+      }
+    }, false);
+
+    canvas.addEventListener('contextmenu', function(event) {
+      event.preventDefault();
+      if(randomButton == 8 && ifSquareClicked()){
+        clicked()
+      } else {
+        missclicked();
+      }
+      return false;
+    }, false);
+
+    document.addEventListener('keypress', function(event) {
+      var keyCode = event.keyCode;
+      if(keyCode == buttons[randomButton] && ifSquareClicked()) {
+        clicked()
+      } else {
+        missclicked();
+      }
+    });
+
+    function ifSquareClicked(){
+      if (mousePosition.y > square.top + 7 && mousePosition.y < square.top + square.height + 11 &&
+         mousePosition.x > square.left + 7 && mousePosition.x < square.left + square.width + 11) {
+           return true;
+         }
+      return false;
+    }
+
+    function clicked() {
+      points.innerText = parseInt(points.innerText) + 1;
+      var sum = 0;
+      for (var i = 0; i < seconds.length; i++) {
+        sum += seconds[i]
+      }
+      avgTime.innerText = Number(Math.round((sum / seconds.length)+'e4')+'e-4');
+      seconds.push(0);
+      resetFieldandTimer();
+    }
+
+    function missclicked() {
+      missclicks.innerText = parseInt(missclicks.innerText) + 1;
+      resetFieldandTimer();
+    }
+
+    function resetFieldandTimer() {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      randomButton = Math.floor((Math.random() * 9) + 0);
+      seconds[seconds.length - 1] = 0;
+      drawSquare();
+    }
+
+    function resetStats() {
+      points.innerText = 0;
+      missclicks.innerText = 0;
+      avgTime.innerText = 0;
+      seconds[seconds.length - 1] = 0;
+    }
+  </script>
+</body>
+</html>
